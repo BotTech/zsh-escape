@@ -1,3 +1,6 @@
 language: shell
 
-script: bash -x ./bin/test.sh
+before_install:
+  - sudo apt-get install -y zsh
+
+script: ./bin/test.zsh
