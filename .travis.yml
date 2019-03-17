@@ -1,1 +1,3 @@
-script: ./bin/test.zsh
+language: shell
+
+script: file /usr/bin/env
