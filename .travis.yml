@@ -1,1 +1,1 @@
-script: ./bin/test.sh
+script: ./bin/test.zsh
