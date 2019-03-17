@@ -12,12 +12,6 @@ readonly CMD_FIX='fix'
 
 if [[ ! -v ZSH_ESCAPE_DIR ]]; then
   readonly ZSH_ESCAPE_DIR="$( cd "$( dirname "${(%):-%N}" )" > /dev/null && pwd )"
-  #type cygpath > /dev/null
-  #if [[ $? -eq 0  ]]; then
-  #  #readonly ZSH_ESCAPE_DIR="$( cd "$( dirname "${(%):-%N}" )" > /dev/null && pwd | xargs cygpath -w )"
-  #else
-  #  readonly ZSH_ESCAPE_DIR="$( cd "$( dirname "${(%):-%N}" )" > /dev/null && pwd )"
-  #fi
 fi
 
 function exec_gawk() {
