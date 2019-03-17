@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-set -ex
+set -e
 
 [[ -v ZSH_ESCAPE_BIN_DIR ]] || readonly ZSH_ESCAPE_BIN_DIR="$( cd "$( dirname "${(%):-%N}" )" > /dev/null && pwd )"
 
