@@ -10,6 +10,16 @@ readonly EXIT_CODE_INCOMPATIBLE_OPTIONS=4
 readonly CMD_REPORT='report'
 readonly CMD_FIX='fix'
 
+if [[ ! -v ZSH_ESCAPE_DIR ]]; then
+  readonly ZSH_ESCAPE_DIR="$( cd "$( dirname "${(%):-%N}" )" > /dev/null && pwd )"
+  #type cygpath > /dev/null
+  #if [[ $? -eq 0  ]]; then
+  #  #readonly ZSH_ESCAPE_DIR="$( cd "$( dirname "${(%):-%N}" )" > /dev/null && pwd | xargs cygpath -w )"
+  #else
+  #  readonly ZSH_ESCAPE_DIR="$( cd "$( dirname "${(%):-%N}" )" > /dev/null && pwd )"
+  #fi
+fi
+
 function exec_gawk() {
   local args
   args=('-v' "$1")
@@ -31,9 +41,9 @@ function exec_gawk() {
       cat <&4 > "$file"
       exec 4>&-
     elif [[ -n "$OUTPUT" ]]; then
-      gawk -f zsh-escape.gawk "${args[@]}" "$file" >"$OUTPUT"
+      gawk -f "$ZSH_ESCAPE_DIR/zsh-escape.gawk" "${args[@]}" "$file" >"$OUTPUT"
     else
-      gawk -f zsh-escape.gawk "${args[@]}" "$file"
+      gawk -f "$ZSH_ESCAPE_DIR/zsh-escape.gawk" "${args[@]}" "$file"
     fi
   done
   return "$?"

@@ -7,6 +7,10 @@ Zsh Escape is a Zsh script for finding and automatically fixing unescaped variab
 * zsh
 * gawk
 
+## Installation
+
+TODO
+
 ## Usage
 
 ### Report
@@ -14,7 +18,7 @@ Zsh Escape is a Zsh script for finding and automatically fixing unescaped variab
 It can be helpful to run the `report` command first.
 This will go through each line in a file and print the line number followed by any potential errors.
 
-`./zsh-escape.zsh report [OPTION]... [FILE]...`
+`zsh-escape.zsh report [OPTION]... [FILE]...`
 
 #### Options
 
@@ -25,26 +29,26 @@ Option | Value | Description
 
 #### Example
 
-```zsh
-zsh-escape.zsh report C:\source\antigen\bin\antigen.zsh
-```
-```text
-...
-12 : # While boot.zsh is part of the ext/cache functionallity it may be disabled
-13 : # with ANTIGEN_CACHE flag, and it's always compiled with antigen.zsh
-14 : if [[ $ANTIGEN_CACHE != false ]]; then
-- Unescaped variable: $ANTIGEN_CACHE
-- Found an unescaped variable
-...
+```sh
+$ cat unescaped-test-simple.zsh
+| if [[ $FOO == false ]]; then
+|   echo "FALSE"
+| fi
+$ zsh-escape.zsh report unescaped-test-simple.zsh
+| 1 : if [[ $FOO == false ]]; then
+| - Unescaped variable: $FOO
+| - Found an unescaped variable
+| 2 :   echo "FALSE"
+| 3 : fi
 ```
 
-This shows that it found an unescaped variable `$ANTIGEN_CACHE`.
+This shows that it found an unescaped variable `$FOO`.
 
 ### Fix
 
 The `fix` command will automatically add missing quotes around unescaped variables.
 
-`./zsh-escape.zsh fix [OPTION]... [FILE]...`
+`zsh-escape.zsh fix [OPTION]... [FILE]...`
 
 Be careful if editing a file in place. It is recommended that you create a backup of the file first or commit it to source control.
 
@@ -58,13 +62,13 @@ Option | Value | Description
 
 #### Example
 
-```zsh
-zsh-escape.zsh fix C:\source\antigen\bin\antigen.zsh
-```
-```text
-...
-# While boot.zsh is part of the ext/cache functionallity it may be disabled
-# with ANTIGEN_CACHE flag, and it's always compiled with antigen.zsh
-if [[ "$ANTIGEN_CACHE" != false ]]; then
-...
+```sh
+$ cat unescaped-test-simple.zsh
+| if [[ $FOO == false ]]; then
+|   echo "FALSE"
+| fi
+$ zsh-escape.zsh fix unescaped-test-simple.zsh
+| if [[ "$FOO" == false ]]; then
+|   echo "FALSE"
+| fi
 ```
