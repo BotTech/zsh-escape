@@ -1,0 +1,8 @@
+language: shell
+
+dist: xenial
+
+before_install:
+  - sudo apt-get install -y zsh
+
+script: ./bin/test.zsh
