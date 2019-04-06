@@ -7,4 +7,5 @@ set -e
 export PATH="$PATH:$ZSH_ESCAPE_BIN_DIR/tush:$ZSH_ESCAPE_BIN_DIR/zsh-escape"
 
 cd "$ZSH_ESCAPE_BIN_DIR/../test"
+tush-check "TESTS.md"
 tush-check "$ZSH_ESCAPE_BIN_DIR/../README.md"
