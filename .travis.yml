@@ -3,4 +3,4 @@ language: shell
 before_install:
   - sudo apt-get install -y zsh
 
-script: ./bin/test.zsh
+script: zsh ./bin/test.zsh
