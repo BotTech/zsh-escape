@@ -10,9 +10,7 @@ readonly EXIT_CODE_INCOMPATIBLE_OPTIONS=4
 readonly CMD_REPORT='report'
 readonly CMD_FIX='fix'
 
-if [[ ! -v ZSH_ESCAPE_DIR ]]; then
-  readonly ZSH_ESCAPE_DIR="$( cd "$( dirname "${(%):-%N}" )" > /dev/null && pwd )"
-fi
+[[ -z "${ZSH_ESCAPE_DIR+x}" ]] && readonly ZSH_ESCAPE_DIR="$( cd "$( dirname "${(%):-%N}" )" > /dev/null && pwd )"
 
 function exec_gawk() {
   local args
