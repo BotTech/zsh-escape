@@ -28,7 +28,7 @@ function exec_gawk() {
       exec 3> "$tmp_file"
       exec 4< "$tmp_file"
       rm "$tmp_file"
-      gawk -f zsh-escape.gawk "${args[@]}" "$file" >&3
+      gawk -f "$ZSH_ESCAPE_DIR/zsh-escape.gawk" "${args[@]}" "$file" >&3
       exec 3>&-
       cat <&4 > "$file"
       exec 4>&-

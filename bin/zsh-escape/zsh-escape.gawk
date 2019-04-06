@@ -91,8 +91,9 @@ function fix_print(char) {
           #  ${name:/pattern/repl}
           #  ${name:offset}
           #  ${name:offset:length}
+          # FIXME: Add better array support. They are quite complicated.
           # See http://zsh.sourceforge.net/Doc/Release/Expansion.html#Parameter-Expansion
-          where = match(tail, /\$([*@#?$!_]|[+#^=~]?[a-zA-Z0-9_]*|[a-zA-Z0-9_]*([-+=?#%:]|:[-+=?#|*^]|::=|##|%%|:^^)[a-zA-Z0-9_]*|\{.*}|\(.*\))/)
+          where = match(tail, /\$([*@#?$!_]|[+#^=~]?[a-zA-Z0-9_]*(\[[^]]*\])?|[a-zA-Z0-9_]*([-+=?#%:]|:[-+=?#|*^]|::=|##|%%|:^^)[a-zA-Z0-9_]*|\{.*}|\(.*\))/)
           if (where) {
             var = substr(tail, RSTART, RLENGTH)
             i = i + RLENGTH - 1
