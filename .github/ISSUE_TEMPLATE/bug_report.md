@@ -13,9 +13,9 @@ A clear and concise description of what the bug is.
 
 Component  | Version
 ---------- | -------
-Zsh Escape | da39a3ee5e6b4b0d3255bfef95601890afd80709 (git hash)
+Zsh Escape | da39a3ee5e6b4b0d3255bfef95601890afd80709 (`git rev-parse HEAD`)
 OS | Windows 10
-Zsh | zsh 5.0.6 (i686-pc-cygwin) (`zsh --version`)
+Zsh | zsh 5.5.1 (i686-pc-cygwin) (`zsh --version`)
 
 **Steps To Reproduce**
 
@@ -27,10 +27,8 @@ cd $dir
 ```
 2. Run:
 ```zsh
-zsh-escape.zsh -r -d bad-script.zsh
+zsh-escape.zsh report bad-script.zsh
 ```
-
-Include the `-d|--debug` option when reporting a bug.
 
 **Expected Behaviour**
 
