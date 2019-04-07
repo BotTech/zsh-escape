@@ -1,6 +1,7 @@
 BEGIN {
   strong = 0
   weak = 0
+  math = 0
   # The character classes don't seem to work properly.
 }
 function print_debug(line) {
@@ -50,72 +51,121 @@ function fix_print(char) {
       fix_print(c)
     } else if (comment) {
       fix_print(c)
+    } else if (strong) {
+      switch (c) {
+      case "'":
+        # FIXME: '''' is a single quoted quote
+        strong = 0
+        report_debug("Strong quote ended")
+        break
+      case "\\":
+        if (i < length(chars) - 1) {
+          escape = 1
+        } else {
+          # A continuation
+        }
+        break
+      }
+      fix_print(c)
+    } else if (weak) {
+      switch (c) {
+      case "\"":
+        weak = 0
+        report_debug("Weak quote ended")
+        break
+      case "\\":
+        if (i < length(chars) - 1) {
+          escape = 1
+        } else {
+          # A continuation
+        }
+        break
+      }
+      fix_print(c)
+    } else if (math) {
+      switch (c) {
+      case ")":
+        if (i < length(chars) -1 && chars[i + 1] == ")") {
+          i++
+          math--
+          report_debug("Arithmetic evaluation ended")
+        }
+        break
+      }
+      fix_print(c)
     } else {
       switch (c) {
       case "'":
-        if (strong) {
-          # FIXME: '''' is a single quoted quote
-          strong = 0
-          report_debug("Strong quote ended")
-        } else if (!weak) {
-          strong = 1
-          report_debug("Strong quote started")
-        }
+        strong = 1
+        report_debug("Strong quote started")
         fix_print(c)
         break
       case "\"":
-        if (weak) {
-          weak = 0
-          report_debug("Weak quote ended")
-        } else if (!strong) {
-          weak = 1
-          report_debug("Weak quote started")
-        }
+        weak = 1
+        report_debug("Weak quote started")
         fix_print(c)
         break
       case "\\":
-        # It is a bit vague but it looks like escapes are valid outside of quotes too.
+        # The documentation is a bit vague but it looks like escapes are valid outside of quotes too.
         if (i < length(chars) - 1) {
           escape = 1
         }
         fix_print(c)
         break
-      case "$":
-        # FIXME: $'abc' is valid
-        # FIXME: if [[ "$foo" =~ ^abc$ ]]; then is valid
-        if (!weak && !strong) {
-          tail = substr($0, i)
-          # FIXME: Add support for:
-          #  ${name/pattern/repl}
-          #  ${name//pattern/repl}
-          #  ${name:/pattern/repl}
-          #  ${name:offset}
-          #  ${name:offset:length}
-          # FIXME: Add better array support. They are quite complicated.
-          # See http://zsh.sourceforge.net/Doc/Release/Expansion.html#Parameter-Expansion
-          where = match(tail, /\$([*@#?$!_]|[+#^=~]?[a-zA-Z0-9_]*(\[[^]]*\])?|[a-zA-Z0-9_]*([-+=?#%:]|:[-+=?#|*^]|::=|##|%%|:^^)[a-zA-Z0-9_]*|\{.*}|\(.*\))/)
-          if (where) {
-            var = substr(tail, RSTART, RLENGTH)
-            i = i + RLENGTH - 1
-            if (report) {
-              # TODO: How can we make a function with varargs?
-              print "- Unescaped variable:",var
-            }
-            fix_print("\"" var "\"")
-          } else {
-            report_error("Cannot retrieve the unescaped variable")
-            report_debug(tail)
-            fix_print(c)
-          }
-          unescaped++
+      case "(":
+        if (i < length(chars) -1 && chars[i + 1] == "(") {
+          i++
+          math++
+          report_debug("Arithmetic evaluation started")
         } else {
-          fix_print(c)
+          # Start of a subshell.
         }
         break
-      case "#":
-        if (!weak && !strong) {
-          comment = 1
+      case "$":
+        tail = substr($0, i)
+        arithmetic_expansion = match(tail, /^\$\(\((\)?[^)]+)*\)\)/)
+        if (arithmetic_expansion) {
+          expansion = substr(tail, RSTART, RLENGTH)
+          i = i + RLENGTH - 1
+          report_print("- Unescaped arithmetic expansion: " expansion)
+          fix_print("\"" expansion "\"")
+          unescaped++
+          break
         }
+        subshell_expansion = match(tail, /^\$\([^)]*\)/)
+        if (subshell_expansion) {
+          expansion = substr(tail, RSTART, RLENGTH)
+          i = i + RLENGTH - 1
+          report_print("- Unescaped subshell expansion: " expansion)
+          fix_print("\"" expansion "\"")
+          unescaped++
+          break
+        }
+        # FIXME: $'abc' is valid
+        # FIXME: if [[ "$foo" =~ ^abc$ ]]; then is valid
+        # FIXME: Add support for:
+        #  ${name/pattern/repl}
+        #  ${name//pattern/repl}
+        #  ${name:/pattern/repl}
+        #  ${name:offset}
+        #  ${name:offset:length}
+        # FIXME: Add better array support. They are quite complicated.
+        # See http://zsh.sourceforge.net/Doc/Release/Expansion.html#Parameter-Expansion
+        parameter_expansion = match(tail, /^\$([*@#?$!_]|[+#^=~]?[a-zA-Z0-9_]+(\[[^]]*\])?|[a-zA-Z0-9_]*([-+=?#%:]|:[-+=?#|*^]|::=|##|%%|:^^)[a-zA-Z0-9_]*|\{.*})/)
+        if (parameter_expansion) {
+          expansion = substr(tail, RSTART, RLENGTH)
+          i = i + RLENGTH - 1
+          report_print("- Unescaped parameter expansion: " expansion)
+          fix_print("\"" expansion "\"")
+        } else {
+          report_error("Cannot retrieve the unescaped expansion")
+          report_debug(tail)
+          fix_print(c)
+        }
+        unescaped++
+        break
+      case "#":
+        comment = 1
         fix_print(c)
         break
       default:
@@ -125,9 +175,9 @@ function fix_print(char) {
     }
   }
   if (unescaped) {
-    report_print("- Found an unescaped variable")
+    report_print("- Found " unescaped " unescaped expansion" ((unescaped > 1) ? "s" : ""))
   } else {
-    report_print("- All variables are escaped (or are not variables)")
+    report_print("- All expansions are escaped")
   }
   if (escape) {
     report_debug("Found an invalid escape sequence")
@@ -144,5 +194,7 @@ END {
     report_print("* Found an unclosed weak quote")
   } else if (strong) {
     report_print("* Found an unclosed strong quote")
+  } else if (math) {
+    report_print("* Found an unclosed arithmetic evaluation")
   }
 }
