@@ -1,0 +1,1 @@
+i=0 && if (( $i + 1 )); then echo true; else echo false; fi

@@ -36,8 +36,8 @@ $ cat unescaped-test-simple.zsh
 | fi
 $ zsh-escape.zsh report unescaped-test-simple.zsh
 | 1 : if [[ $FOO == false ]]; then
-| - Unescaped variable: $FOO
-| - Found an unescaped variable
+| - Unescaped parameter expansion: $FOO
+| - Found 1 unescaped expansion
 | 2 :   echo "FALSE"
 | 3 : fi
 ```
