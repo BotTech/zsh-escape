@@ -2,7 +2,23 @@ BEGIN {
   strong = 0
   weak = 0
   math = 0
-  # The character classes don't seem to work properly.
+  # FIXME: $'abc' is valid
+  # FIXME: if [[ "$foo" =~ ^abc$ ]]; then is valid
+  # FIXME: Add support for:
+  #  ${name/pattern/repl}
+  #  ${name//pattern/repl}
+  #  ${name:/pattern/repl}
+  #  ${name:offset}
+  #  ${name:offset:length}
+  # FIXME: Add better array support. They are quite complicated.
+  # See http://zsh.sourceforge.net/Doc/Release/Expansion.html#Parameter-Expansion
+  patterns[1, 1] = "^\\$\\(\\((\\)?[^)]+)*\\)\\)"
+  patterns[1, 2] = "- Unescaped arithmetic expansion: "
+  patterns[2, 1] = "^\\$\\([^)]*\\)"
+  patterns[2, 2] = "- Unescaped subshell expansion: "
+  patterns[3, 1] = "^\\$([*@#?$!_]|[+#^=~]?[a-zA-Z0-9_]+(\\[[^]]*\\])?|[a-zA-Z0-9_]*([-+=?#%:]|:[-+=?#|*^]|::=|##|%%|:^^)[a-zA-Z0-9_]*|\\{.*})"
+  patterns[3, 2] = "- Unescaped parameter expansion: "
+  num_patterns = 3
 }
 function print_debug(line) {
   if (debug) {
@@ -29,9 +45,28 @@ function fix_print(char) {
     printf "%s",char
   }
 }
+function check_expansion(str, _i, _pattern, _message, _is_expansion, _expansion) {
+  print_debug("checking: " str)
+  for (_i = 1; _i <= num_patterns; _i++) {
+    _pattern = patterns[_i, 1]
+    _message = patterns[_i, 2]
+    print_debug("pattern: " _pattern)
+    _is_expansion = match(str, _pattern)
+    if (_is_expansion) {
+      _expansion = substr(str, RSTART, RLENGTH)
+      print_debug("RSTART: " RSTART)
+      print_debug("RLENGTH: " RLENGTH)
+      print_debug("expansion: " _expansion)
+      report_print(_message _expansion)
+      fix_print("\"" _expansion "\"")
+      return _expansion
+    }
+  }
+  return ""
+}
 {
   if (report) {
-    print FNR,":",$0
+    print(FNR ": " $0)
     if (weak) {
       print_debug("Multi-line weak quote")
     } else if (strong) {
@@ -86,6 +121,7 @@ function fix_print(char) {
       switch (c) {
       case ")":
         if (i < length(chars) -1 && chars[i + 1] == ")") {
+          fix_print(")")
           i++
           math--
           report_debug("Arithmetic evaluation ended")
@@ -114,55 +150,26 @@ function fix_print(char) {
         break
       case "(":
         if (i < length(chars) -1 && chars[i + 1] == "(") {
+          fix_print("(")
           i++
           math++
           report_debug("Arithmetic evaluation started")
         } else {
           # Start of a subshell.
         }
+        fix_print(c)
         break
       case "$":
+        print_debug("i: " i)
+        unescaped++
         tail = substr($0, i)
-        arithmetic_expansion = match(tail, /^\$\(\((\)?[^)]+)*\)\)/)
-        if (arithmetic_expansion) {
-          expansion = substr(tail, RSTART, RLENGTH)
-          i = i + RLENGTH - 1
-          report_print("- Unescaped arithmetic expansion: " expansion)
-          fix_print("\"" expansion "\"")
-          unescaped++
-          break
-        }
-        subshell_expansion = match(tail, /^\$\([^)]*\)/)
-        if (subshell_expansion) {
-          expansion = substr(tail, RSTART, RLENGTH)
-          i = i + RLENGTH - 1
-          report_print("- Unescaped subshell expansion: " expansion)
-          fix_print("\"" expansion "\"")
-          unescaped++
-          break
-        }
-        # FIXME: $'abc' is valid
-        # FIXME: if [[ "$foo" =~ ^abc$ ]]; then is valid
-        # FIXME: Add support for:
-        #  ${name/pattern/repl}
-        #  ${name//pattern/repl}
-        #  ${name:/pattern/repl}
-        #  ${name:offset}
-        #  ${name:offset:length}
-        # FIXME: Add better array support. They are quite complicated.
-        # See http://zsh.sourceforge.net/Doc/Release/Expansion.html#Parameter-Expansion
-        parameter_expansion = match(tail, /^\$([*@#?$!_]|[+#^=~]?[a-zA-Z0-9_]+(\[[^]]*\])?|[a-zA-Z0-9_]*([-+=?#%:]|:[-+=?#|*^]|::=|##|%%|:^^)[a-zA-Z0-9_]*|\{.*})/)
-        if (parameter_expansion) {
-          expansion = substr(tail, RSTART, RLENGTH)
-          i = i + RLENGTH - 1
-          report_print("- Unescaped parameter expansion: " expansion)
-          fix_print("\"" expansion "\"")
+        expansion = check_expansion(tail)
+        if (expansion != "") {
+          i = i + length(expansion) - 1
         } else {
-          report_error("Cannot retrieve the unescaped expansion")
-          report_debug(tail)
+          report_error("Cannot find the unescaped expansion in: " tail)
           fix_print(c)
         }
-        unescaped++
         break
       case "#":
         comment = 1
