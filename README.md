@@ -30,11 +30,11 @@ Option | Value | Description
 #### Example
 
 ```sh
-$ cat unescaped-test-simple.zsh
+$ cat parameter-expansion.zsh
 | if [[ $FOO == false ]]; then
 |   echo "FALSE"
 | fi
-$ zsh-escape.zsh report unescaped-test-simple.zsh
+$ zsh-escape.zsh report parameter-expansion.zsh
 | 1: if [[ $FOO == false ]]; then
 | - Unescaped parameter expansion: $FOO
 | - Found 1 unescaped expansion
@@ -63,11 +63,11 @@ Option | Value | Description
 #### Example
 
 ```sh
-$ cat unescaped-test-simple.zsh
+$ cat parameter-expansion.zsh
 | if [[ $FOO == false ]]; then
 |   echo "FALSE"
 | fi
-$ zsh-escape.zsh fix unescaped-test-simple.zsh
+$ zsh-escape.zsh fix parameter-expansion.zsh
 | if [[ "$FOO" == false ]]; then
 |   echo "FALSE"
 | fi
